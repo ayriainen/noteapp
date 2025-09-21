@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ note.title }}{% endblock %}
+
+{% block content %}
+<h2>{{ note.title }}</h2>
+
+<p class="note-actions">
+    <a href="/edit_note/{{ note.id }}">Edit</a>
+    <a href="/remove_note/{{ note.id }}">Delete</a>
+</p>
+
+<div class="content-box">
+    {{ note.content | show_lines }}
+</div>
+
+<div class="note-meta">
+    Created: {{ note.created_at[:16].replace('T', ' ') }}<br>
+    Last updated: {{ note.updated_at[:16].replace('T', ' ') }}
+</div>
+
+<p class="note-actions">
+    <a href="/">Back to all notes</a>
+</p>
+{% endblock %}

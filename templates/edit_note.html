@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Note{% endblock %}
+
+{% block content %}
+<h2>Edit Note</h2>
+
+<form action="/update_note" method="post">
+    <p>
+        <label for="title">Title:</label> <br/>
+        <input type="text" name="title" id="title" value="{{ note.title }}" maxlength="100" style="width: 100%;" required />
+    </p>
+
+    <p>
+        <label for="content">Content:</label> <br/>
+        <textarea name="content" id="content" rows="15" maxlength="5000" style="width: 100%;" required>{{ note.content }}</textarea>
+    </p>
+
+    <input type="hidden" name="note_id" value="{{ note.id }}" />
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+    <input type="submit" value="Update Note" />
+    <input type="submit" name="cancel" value="Cancel" onclick="window.location.href='/note/{{ note.id }}'; return false;" />
+</form>
+{% endblock %}

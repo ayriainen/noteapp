@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h2>Create Account</h2>
+
+<form action="/create_user" method="post">
+    <p>
+        <label for="username">Username:</label> <br/>
+        <input type="text" name="username" id="username" minlength="3" maxlength="20" required />
+    </p>
+
+    <p>
+        <label for="password1">Password:</label> <br/>
+        <input type="password" name="password1" id="password1" minlength="3" required />
+    </p>
+
+    <p>
+        <label for="password2">Confirm Password:</label> <br/>
+        <input type="password" name="password2" id="password2" minlength="3" required />
+    </p>
+
+    <input type="submit" value="Create Account" />
+</form>
+{% endblock %}

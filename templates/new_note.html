@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}New Note{% endblock %}
+
+{% block content %}
+<h2>Create New Note</h2>
+
+<form action="/create_note" method="post">
+    <p>
+        <label for="title">Title:</label> <br/>
+        <input type="text" name="title" id="title" maxlength="100" style="width: 100%;" required />
+    </p>
+
+    <p>
+        <label for="content">Content:</label> <br/>
+        <textarea name="content" id="content" rows="15" maxlength="5000" style="width: 100%;" required></textarea>
+    </p>
+
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+    <input type="submit" value="Create Note" />
+</form>
+{% endblock %}

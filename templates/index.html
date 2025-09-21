@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block title %}Notes{% endblock %}
+
+{% block content %}
+{% if session.user_id %}
+    <h2>Your Notes</h2>
+
+    {% if notes %}
+        {% for note in notes %}
+        <div class="note">
+            <a href="/note/{{ note.id }}">{{ note.title }}</a><br/>
+            <small>Last updated: {{ note.updated_at[:16].replace('T', ' ') }}</small>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>You haven't created any notes yet.</p>
+    {% endif %}
+{% else %}
+    <h2>Welcome to Note App</h2>
+    <p>A simple and secure place to store your notes.</p>
+    <p>Please log in or register to get started.</p>
+{% endif %}
+{% endblock %}

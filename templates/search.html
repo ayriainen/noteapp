@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}Search Notes{% endblock %}
+
+{% block content %}
+<h2>Search Notes</h2>
+
+<form action="/search" method="get">
+    <p>
+        <label for="query">Search keyword:</label> <br />
+        <input type="text" name="query" id="query" value="{{ query }}" />
+    </p>
+    <p>
+        <input type="submit" value="Search" />
+    </p>
+</form>
+
+{% if query %}
+    <h3>Search results for "{{ query }}"</h3>
+
+    {% if results %}
+        {% for note in results %}
+        <div class="note">
+            <a href="/note/{{ note.id }}">{{ note.title }}</a><br/>
+            <small>Last updated: {{ note.updated_at[:16].replace('T', ' ') }}</small>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No notes found matching your search.</p>
+    {% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,85 @@
+/*
+  I was googling note app colors and liked the background color of the Evernote website.
+  The style could be much improved with proper front stuff but for now it's this basicness.
+*/
+body {
+    margin: auto;
+    max-width: 50em;
+    font-family: sans-serif;
+    background-color: #faf6f3;
+}
+
+.note {
+    border: 2px solid black;
+    margin: 1em;
+    padding: 0.2em 0.5em;
+}
+
+.note a {
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.note a:hover {
+    text-decoration: underline;
+}
+
+.info {
+    border: 2px solid black;
+    margin: 1em;
+    padding: 0.5em;
+    background-color: green;
+    color: white;
+}
+
+.error {
+    border: 2px solid black;
+    margin: 1em;
+    padding: 0.5em;
+    background-color: red;
+    color: white;
+}
+
+nav {
+    border: 2px solid black;
+    padding: 0.5em;
+    margin: 1em 0;
+    background-color: #e8e0d8;
+}
+
+nav a {
+    margin: 0 0.5em;
+    padding: 0.3em 0.6em;
+    background-color: white;
+    color: black;
+    text-decoration: none;
+    border: 1px solid black;
+}
+
+nav a:hover {
+    background-color: #333;
+    color: white;
+}
+
+.note-actions a {
+    margin: 0 0.3em;
+    padding: 0.2em 0.5em;
+    background-color: #e8e0d8;
+    color: black;
+    text-decoration: none;
+    border: 1px solid black;
+}
+
+.note-actions a:hover {
+    background-color: #333;
+    color: white;
+}
+
+.content-box {
+    border: 2px solid black;
+    padding: 1em;
+    margin: 1em 0;
+    background-color: white;
+    min-height: 200px;
+}
