@@ -20,9 +20,20 @@
 
     {% if results %}
         {% for note in results %}
-        <div class="note">
-            <a href="/note/{{ note.id }}">{{ note.title }}</a><br/>
-            <small>Last updated: {{ note.updated_at[:16].replace('T', ' ') }}</small>
+        <div style="margin: 0.5em 0; padding: 0.35em 0; border-bottom: 1px solid #ddd;">
+            <a class="note-title" href="/note/{{ note.id }}">{{ note.title }}</a><br/>
+            <small>
+                Last updated: {{ note.updated_at[:16].replace('T',' ') }}
+                {% if note.status %}&nbsp;&nbsp;Status: {{ note.status }}{% endif %}
+                {% if note.priority %}&nbsp;&nbsp;Priority: {{ note.priority }}{% endif %}
+                {% if note.context %}&nbsp;&nbsp;Context: {{ note.context }}{% endif %}
+
+                {% if note.shared_with_me %}
+                    &nbsp;&nbsp;Shared by {{ note.owner_username }}
+                {% elif note.shared_by_me %}
+                    &nbsp;&nbsp;Shared
+                {% endif %}
+            </small>
         </div>
         {% endfor %}
     {% else %}

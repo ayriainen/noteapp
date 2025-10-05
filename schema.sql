@@ -26,3 +26,8 @@ CREATE TABLE note_classes (
     value TEXT
 );
 
+CREATE TABLE shares (
+    id INTEGER PRIMARY KEY,
+    note_id INTEGER REFERENCES notes,
+    user_id INTEGER REFERENCES users
+);

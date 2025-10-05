@@ -1,5 +1,6 @@
 """
 This is the main file, mostly resembling the example app's app.py.
+Note sharing added bothersome complexity.
 """
 import re
 import secrets
@@ -36,9 +37,11 @@ def show_lines(content):
 @app.route("/")
 def index():
     if "user_id" in session:
-        user_notes = notes.get_user_notes(session["user_id"])
-        return render_template("index.html", notes=user_notes)
-    return render_template("index.html", notes=[])
+        me = session["user_id"]
+        your_notes = notes.get_user_notes(me)
+        shared_notes = notes.get_shared_with_user(me)
+        return render_template("index.html", notes=your_notes, shared_notes=shared_notes)
+    return render_template("index.html", notes=[], shared_notes=[])
 
 @app.route("/note/<int:note_id>")
 def show_note(note_id):
@@ -46,17 +49,19 @@ def show_note(note_id):
     note = notes.get_note(note_id)
     if not note:
         abort(404)
-    if note["user_id"] != session["user_id"]:
+    me = session["user_id"]
+    if note["user_id"] != me and not notes.is_shared_with(note_id, me):
         abort(403)
     classes = notes.get_classes(note_id)
-    return render_template("show_note.html", note=note, classes=classes)
+    shared_users = notes.get_shares(note_id) if note["user_id"] == me else []
+    return render_template("show_note.html", note=note, classes=classes, shared_users=shared_users)
 
 @app.route("/search")
 def search():
     require_login()
     query = request.args.get("query")
     if query:
-        results = notes.search_notes(session["user_id"], query)
+        results = notes.search_accessible(session["user_id"], query)
     else:
         query = ""
         results = []
@@ -171,6 +176,50 @@ def remove_note(note_id):
         else:
             return redirect("/note/" + str(note_id))
 
+@app.route("/share_note", methods=["POST"])
+def share_note():
+    require_login()
+    check_csrf()
+
+    note_id = int(request.form["note_id"])
+    username = request.form["username"].strip()
+
+    note = notes.get_note(note_id)
+    if not note or note["user_id"] != session["user_id"]:
+        abort(403)
+
+    target = users.get_user_by_username(username)
+    if not target:
+        flash("ERROR: User not found")
+        return redirect("/note/" + str(note_id))
+    if target["id"] == session["user_id"]:
+        flash("ERROR: You already own this note")
+        return redirect("/note/" + str(note_id))
+
+    if not notes.is_shared_with(note_id, target["id"]):
+        notes.add_share(note_id, target["id"])
+        flash("Shared with " + target["username"])
+    else:
+        flash("Already shared with " + target["username"])
+
+    return redirect("/note/" + str(note_id))
+
+@app.route("/unshare_note", methods=["POST"])
+def unshare_note():
+    require_login()
+    check_csrf()
+
+    note_id = int(request.form["note_id"])
+    user_id = int(request.form["user_id"])
+
+    note = notes.get_note(note_id)
+    if not note or note["user_id"] != session["user_id"]:
+        abort(403)
+
+    notes.remove_share(note_id, user_id)
+    flash("Sharing removed")
+    return redirect("/note/" + str(note_id))
+
 @app.route("/register")
 def register():
     return render_template("register.html")
@@ -227,7 +276,7 @@ def logout():
         del session["user_id"]
         del session["username"]
         del session["csrf_token"]
-    return redirect("/")
+    return redirect("/login")
 
 @app.route("/user/<int:user_id>")
 def show_user(user_id):
@@ -244,7 +293,6 @@ def show_user(user_id):
         note_stats = None
 
     return render_template("show_user.html", user=user, notes=user_notes, stats=note_stats)
-
 
 # "localhost" url wasn't working with the example app execution, only ip was
 # so instead of "flask run" it's "python3 app.py"

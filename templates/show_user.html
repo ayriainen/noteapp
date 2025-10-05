@@ -41,6 +41,7 @@
             {% if note.status %}{{ note.status }}{% endif %}
             {% if note.priority %}{% if note.status %} - {% endif %}{{ note.priority }}{% endif %}
             {% if note.context %}{% if note.status or note.priority %} - {% endif %}{{ note.context }}{% endif %}
+            {% if note.shared %} - Shared{% endif %}
           </small>
         </div>
       {% endfor %}

@@ -5,29 +5,62 @@
 {% block content %}
 <h2>{{ note.title }}</h2>
 
+{% if session.user_id == note.user_id %}
 <p class="note-actions">
-    <a href="/edit_note/{{ note.id }}">Edit</a>
-    <a href="/remove_note/{{ note.id }}">Delete</a>
+  <a href="/edit_note/{{ note.id }}">Edit</a>
+  <a href="/remove_note/{{ note.id }}">Delete</a>
 </p>
+{% endif %}
 
 <div class="content-box">
-    {{ note.content | show_lines }}
+  {{ note.content | show_lines }}
 </div>
 
 {% if classes %}
 <p>
-{% for class in classes %}
+  {% for class in classes %}
     {{ class.title }}: {{ class.value }}{% if not loop.last %} &nbsp;&nbsp;&nbsp; {% endif %}
-{% endfor %}
+  {% endfor %}
 </p>
 {% endif %}
 
 <div class="note-meta">
-    Created: {{ note.created_at[:16].replace('T', ' ') }}<br>
-    Last updated: {{ note.updated_at[:16].replace('T', ' ') }}
+  {% if session.user_id != note.user_id %}
+  Shared by: {{ note.username }}<br>
+  {% endif %}
+  Created: {{ note.created_at[:16].replace('T', ' ') }}<br>
+  Last updated: {{ note.updated_at[:16].replace('T', ' ') }}
 </div>
 
+{% if session.user_id == note.user_id %}
+  {% if shared_users %}
+    <p>Sharing with:</p>
+    {% for u in shared_users %}
+      <div style="margin: 0.3em 0;">
+        {{ u.username }}
+        <form action="/unshare_note" method="post" style="display:inline; margin-left: 0.6em;">
+          <input type="hidden" name="note_id" value="{{ note.id }}">
+          <input type="hidden" name="user_id" value="{{ u.id }}">
+          <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+          <input type="submit" value="Remove">
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>Sharing with: (no one)</p>
+  {% endif %}
+
+  <form action="/share_note" method="post">
+    <label for="username">Share with user</label>:
+    <input type="text" name="username" id="username" required>
+    <input type="hidden" name="note_id" value="{{ note.id }}">
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+    <input type="submit" value="Share">
+  </form>
+{% endif %}
+
 <p class="note-actions">
-    <a href="/">Back to all notes</a>
+  <a href="/">Back to all notes</a>
 </p>
+
 {% endblock %}

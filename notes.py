@@ -4,6 +4,7 @@ Everything had to be customized for notes.
 There's also created and updated times.
 Example app's classes was a bit complex and required additions to most functions,
 could've probably been simplified.
+Sharing added complexity with accessability.
 """
 import db
 from datetime import datetime
@@ -42,7 +43,8 @@ def get_user_notes(user_id):
     sql = """SELECT n.id, n.title, n.content, n.created_at, n.updated_at,
                     (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Status'  LIMIT 1) AS status,
                     (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Priority' LIMIT 1) AS priority,
-                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Context'  LIMIT 1) AS context
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Context'  LIMIT 1) AS context,
+                    EXISTS(SELECT 1 FROM shares s WHERE s.note_id = n.id) AS shared
              FROM notes n
              WHERE n.user_id = ?
              ORDER BY n.updated_at DESC, n.id DESC"""
@@ -83,3 +85,49 @@ def search_notes(user_id, query):
              ORDER BY updated_at DESC"""
     like = "%" + query + "%"
     return db.query(sql, [user_id, like, like])
+
+def is_shared_with(note_id, user_id):
+    sql = "SELECT id FROM shares WHERE note_id = ? AND user_id = ?"
+    return bool(db.query(sql, [note_id, user_id]))
+
+def add_share(note_id, user_id):
+    sql = "INSERT INTO shares (note_id, user_id) VALUES (?, ?)"
+    db.execute(sql, [note_id, user_id])
+
+def remove_share(note_id, user_id):
+    sql = "DELETE FROM shares WHERE note_id = ? AND user_id = ?"
+    db.execute(sql, [note_id, user_id])
+
+def get_shares(note_id):
+    sql = """SELECT users.id, users.username
+             FROM shares, users
+             WHERE shares.note_id = ? AND shares.user_id = users.id
+             ORDER BY users.username"""
+    return db.query(sql, [note_id])
+
+def get_shared_with_user(user_id):
+    sql = """SELECT n.id, n.title, n.updated_at, u.username AS owner_username,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Status'  LIMIT 1) AS status,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Priority' LIMIT 1) AS priority,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Context'  LIMIT 1) AS context
+             FROM notes n
+             JOIN users u ON n.user_id = u.id
+             WHERE EXISTS(SELECT 1 FROM shares s WHERE s.user_id = ? AND s.note_id = n.id)
+             ORDER BY n.updated_at DESC, n.id DESC"""
+    return db.query(sql, [user_id])
+
+def search_accessible(user_id, query):
+    like = "%" + query + "%"
+    sql = """SELECT n.id, n.title, n.updated_at, u.username AS owner_username,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Status'  LIMIT 1) AS status,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Priority' LIMIT 1) AS priority,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Context'  LIMIT 1) AS context,
+                    EXISTS(SELECT 1 FROM shares s WHERE s.note_id = n.id AND s.user_id = ?) AS shared_with_me,
+                    CASE WHEN n.user_id = ? AND EXISTS(SELECT 1 FROM shares s2 WHERE s2.note_id = n.id)
+                         THEN 1 ELSE 0 END AS shared_by_me
+             FROM notes n
+             JOIN users u ON n.user_id = u.id
+             WHERE (n.user_id = ? OR EXISTS(SELECT 1 FROM shares sx WHERE sx.note_id = n.id AND sx.user_id = ?))
+               AND (n.title LIKE ? OR n.content LIKE ?)
+             ORDER BY n.updated_at DESC, n.id DESC"""
+    return db.query(sql, [user_id, user_id, user_id, user_id, like, like])
