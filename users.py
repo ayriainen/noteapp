@@ -30,8 +30,12 @@ def get_note_stats(user_id):
     sql = "SELECT COUNT(*) AS total FROM notes WHERE user_id = ?"
     total = db.query(sql, [user_id])[0]["total"]
 
-    sql = """SELECT COALESCE((SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Status'  LIMIT 1),
-                              'Unassigned') AS value,
+    sql = """SELECT COALESCE(
+                     (SELECT value
+                        FROM note_classes
+                       WHERE note_id = n.id AND title = 'Status'
+                       LIMIT 1),
+                     'Unassigned') AS value,
                     COUNT(*) AS count
              FROM notes n
              WHERE n.user_id = ?
@@ -39,8 +43,12 @@ def get_note_stats(user_id):
              ORDER BY (value='Unassigned'), value"""
     by_status = db.query(sql, [user_id])
 
-    sql = """SELECT COALESCE((SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Priority' LIMIT 1),
-                              'Unassigned') AS value,
+    sql = """SELECT COALESCE(
+                     (SELECT value
+                        FROM note_classes
+                       WHERE note_id = n.id AND title = 'Priority'
+                       LIMIT 1),
+                     'Unassigned') AS value,
                     COUNT(*) AS count
              FROM notes n
              WHERE n.user_id = ?
@@ -48,8 +56,12 @@ def get_note_stats(user_id):
              ORDER BY (value='Unassigned'), value"""
     by_priority = db.query(sql, [user_id])
 
-    sql = """SELECT COALESCE((SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Context'  LIMIT 1),
-                              'Unassigned') AS value,
+    sql = """SELECT COALESCE(
+                     (SELECT value
+                        FROM note_classes
+                       WHERE note_id = n.id AND title = 'Context'
+                       LIMIT 1),
+                     'Unassigned') AS value,
                     COUNT(*) AS count
              FROM notes n
              WHERE n.user_id = ?

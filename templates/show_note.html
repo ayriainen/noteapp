@@ -12,7 +12,7 @@
 </p>
 {% endif %}
 
-<div class="content-box">
+<div class="content-box" style="overflow-wrap:anywhere; word-break:break-word;">
   {{ note.content | show_lines }}
 </div>
 
@@ -25,16 +25,16 @@
 {% endif %}
 
 <div class="note-meta">
-  {% if session.user_id != note.user_id %}
-  Shared by: {{ note.username }}<br>
-  {% endif %}
-  Created: {{ note.created_at[:16].replace('T', ' ') }}<br>
-  Last updated: {{ note.updated_at[:16].replace('T', ' ') }}
+    Created: {{ note.created_at[:16].replace('T', ' ') }}<br>
+    Last updated: {{ note.updated_at[:16].replace('T', ' ') }}
+    {% if session.user_id != note.user_id %}
+    <br>Shared by: {{ note.username }}
+    {% endif %}
 </div>
 
 {% if session.user_id == note.user_id %}
   {% if shared_users %}
-    <p>Sharing with:</p>
+    Sharing with:
     {% for u in shared_users %}
       <div style="margin: 0.3em 0;">
         {{ u.username }}
@@ -47,7 +47,7 @@
       </div>
     {% endfor %}
   {% else %}
-    <p>Sharing with: (no one)</p>
+    Sharing with: (no one)
   {% endif %}
 
   <form action="/share_note" method="post">
@@ -58,6 +58,42 @@
     <input type="submit" value="Share">
   </form>
 {% endif %}
+
+{% if comments %}
+  <h3>Comments:</h3>
+  {% for c in comments %}
+    <div style="padding: 0.35rem 0; border-bottom: 1px solid #ddd;">
+        <div style="overflow-wrap:anywhere; word-break:break-word;">
+            {{ c.content | show_lines }}
+        </div>
+      <div style="font-size: smaller;">
+        <span>{{ c.created_at[:16].replace('T',' ') }} - {{ c.username }}</span>
+        {% if c.user_id == session.user_id %}
+            <span style="float: right;">
+                <form action="/edit_comment/{{ c.id }}" method="get" style="display:inline;">
+                <input type="submit" value="Edit">
+                </form>
+                <form action="/remove_comment/{{ c.id }}" method="post" style="display:inline; margin-left:0.6em;">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+                <input type="submit" value="Remove">
+                </form>
+            </span>
+        {% endif %}
+        <div style="clear: both;"></div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <p><strong>Comments:</strong> No comments</p>
+{% endif %}
+
+<form action="/add_comment" method="post" style="margin-top:0.5rem;">
+  <label for="content">Add a comment</label>:<br>
+  <textarea name="content" id="content" rows="4" maxlength="2000" style="width:100%;" required></textarea>
+  <input type="hidden" name="note_id" value="{{ note.id }}">
+  <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+  <br><input type="submit" value="Post comment">
+</form>
 
 <p class="note-actions">
   <a href="/">Back to all notes</a>

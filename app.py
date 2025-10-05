@@ -54,7 +54,12 @@ def show_note(note_id):
         abort(403)
     classes = notes.get_classes(note_id)
     shared_users = notes.get_shares(note_id) if note["user_id"] == me else []
-    return render_template("show_note.html", note=note, classes=classes, shared_users=shared_users)
+    comments = notes.get_comments(note_id)
+    return render_template("show_note.html",
+                           note=note,
+                           classes=classes,
+                           shared_users=shared_users,
+                           comments=comments)
 
 @app.route("/search")
 def search():
@@ -277,6 +282,62 @@ def logout():
         del session["username"]
         del session["csrf_token"]
     return redirect("/login")
+
+@app.route("/add_comment", methods=["POST"])
+def add_comment():
+    require_login()
+    check_csrf()
+    note_id = int(request.form["note_id"])
+    content = request.form["content"].strip()
+    if not content or len(content) > 2000:
+        flash("ERROR: Comment can be at most 2000 characters")
+        return redirect("/note/" + str(note_id))
+    note = notes.get_note(note_id)
+    if not note:
+        abort(404)
+    me = session["user_id"]
+    if note["user_id"] != me and not notes.is_shared_with(note_id, me):
+        abort(403)
+    notes.add_comment(note_id, me, content)
+    return redirect("/note/" + str(note_id))
+
+@app.route("/edit_comment/<int:comment_id>", methods=["GET", "POST"])
+def edit_comment(comment_id):
+    require_login()
+    comment = notes.get_comment(comment_id)
+    if not comment:
+        abort(404)
+    note = notes.get_note(comment["note_id"])
+    if not note:
+        abort(404)
+    me = session["user_id"]
+    if comment["user_id"] != me:
+        abort(403)
+    if request.method == "GET":
+        return render_template("edit_comment.html", comment=comment, note=note)
+    check_csrf()
+    content = request.form["content"].strip()
+    if not content or len(content) > 2000:
+        flash("ERROR: Comment must be 1–2000 characters")
+        return redirect("/edit_comment/" + str(comment_id))
+    notes.update_comment(comment_id, content)
+    return redirect("/note/" + str(comment["note_id"]))
+
+@app.route("/remove_comment/<int:comment_id>", methods=["POST"])
+def remove_comment(comment_id):
+    require_login()
+    check_csrf()
+    comment = notes.get_comment(comment_id)
+    if not comment:
+        abort(404)
+    note = notes.get_note(comment["note_id"])
+    if not note:
+        abort(404)
+    me = session["user_id"]
+    if comment["user_id"] != me:
+        abort(403)
+    notes.remove_comment(comment_id)
+    return redirect("/note/" + str(comment["note_id"]))
 
 @app.route("/user/<int:user_id>")
 def show_user(user_id):

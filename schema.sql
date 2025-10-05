@@ -31,3 +31,11 @@ CREATE TABLE shares (
     note_id INTEGER REFERENCES notes,
     user_id INTEGER REFERENCES users
 );
+
+CREATE TABLE comments (
+    id INTEGER PRIMARY KEY,
+    note_id INTEGER REFERENCES notes,
+    user_id INTEGER REFERENCES users,
+    content TEXT,
+    created_at TEXT
+);

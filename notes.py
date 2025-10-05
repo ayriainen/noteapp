@@ -122,7 +122,7 @@ def search_accessible(user_id, query):
                     (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Status'  LIMIT 1) AS status,
                     (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Priority' LIMIT 1) AS priority,
                     (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Context'  LIMIT 1) AS context,
-                    EXISTS(SELECT 1 FROM shares s WHERE s.note_id = n.id AND s.user_id = ?) AS shared_with_me,
+                    EXISTS(SELECT 1 FROM shares s  WHERE s.note_id = n.id AND s.user_id = ?) AS shared_with_me,
                     CASE WHEN n.user_id = ? AND EXISTS(SELECT 1 FROM shares s2 WHERE s2.note_id = n.id)
                          THEN 1 ELSE 0 END AS shared_by_me
              FROM notes n
@@ -131,3 +131,39 @@ def search_accessible(user_id, query):
                AND (n.title LIKE ? OR n.content LIKE ?)
              ORDER BY n.updated_at DESC, n.id DESC"""
     return db.query(sql, [user_id, user_id, user_id, user_id, like, like])
+
+def add_comment(note_id, user_id, content):
+    sql = """INSERT INTO comments (note_id, user_id, content, created_at)
+             VALUES (?, ?, ?, ?)"""
+    now = datetime.now().isoformat()
+    db.execute(sql, [note_id, user_id, content, now])
+
+def get_comments(note_id):
+    sql = """SELECT comments.id,
+                    comments.content,
+                    comments.created_at,
+                    users.id AS user_id,
+                    users.username
+             FROM comments, users
+             WHERE comments.note_id = ? AND comments.user_id = users.id
+             ORDER BY comments.id DESC"""
+    return db.query(sql, [note_id])
+
+def get_comment(comment_id):
+    sql = """SELECT comments.id,
+                    comments.note_id,
+                    comments.user_id,
+                    comments.content,
+                    comments.created_at
+             FROM comments
+             WHERE comments.id = ?"""
+    result = db.query(sql, [comment_id])
+    return result[0] if result else None
+
+def update_comment(comment_id, content):
+    sql = """UPDATE comments SET content = ? WHERE id = ?"""
+    db.execute(sql, [content, comment_id])
+
+def remove_comment(comment_id):
+    sql = """DELETE FROM comments WHERE id = ?"""
+    db.execute(sql, [comment_id])
