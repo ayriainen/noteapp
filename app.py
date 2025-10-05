@@ -229,6 +229,23 @@ def logout():
         del session["csrf_token"]
     return redirect("/")
 
+@app.route("/user/<int:user_id>")
+def show_user(user_id):
+    user = users.get_user(user_id)
+    if not user:
+        abort(404)
+
+    # only own notes for now
+    if "user_id" in session and session["user_id"] == user_id:
+        user_notes = users.get_notes(user_id)
+        note_stats = users.get_note_stats(user_id)
+    else:
+        user_notes = []
+        note_stats = None
+
+    return render_template("show_user.html", user=user, notes=user_notes, stats=note_stats)
+
+
 # "localhost" url wasn't working with the example app execution, only ip was
 # so instead of "flask run" it's "python3 app.py"
 if __name__ == "__main__":

@@ -9,8 +9,13 @@
     {% if notes %}
         {% for note in notes %}
         <div class="note">
-            <a href="/note/{{ note.id }}">{{ note.title }}</a><br/>
-            <small>Last updated: {{ note.updated_at[:16].replace('T', ' ') }}</small>
+        <a class="note-title" href="/note/{{ note.id }}">{{ note.title }}</a><br/>
+        <small>
+            Last updated: {{ note.updated_at[:16].replace('T',' ') }}
+            {% if note.status %}&nbsp;&nbsp;Status: {{ note.status }}{% endif %}
+            {% if note.priority %}&nbsp;&nbsp;Priority: {{ note.priority }}{% endif %}
+            {% if note.context %}&nbsp;&nbsp;Context: {{ note.context }}{% endif %}
+        </small>
         </div>
         {% endfor %}
     {% else %}

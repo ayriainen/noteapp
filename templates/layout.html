@@ -15,7 +15,9 @@
         <a href="/search">Search Notes</a>
         <a href="/new_note">New Note</a>
         <a href="#" onclick="if(confirm('Are you sure you want to log out?')) window.location.href='/logout'; return false;">Log Out</a>
-        <span style="float: right; padding: 0.1em 0.6em; font-weight: bold; border-left: 2px solid black;">{{ session.username }}</span>
+        <span style="float: right; padding: 0em 0.6em; font-weight: bold; border-left: 2px solid black;">
+            <a href="/user/{{ session.user_id }}" style="text-decoration: none;">{{ session.username }}</a>
+        </span>
         {% else %}
         <a href="/login">Log In</a>
         <a href="/register">Register</a>

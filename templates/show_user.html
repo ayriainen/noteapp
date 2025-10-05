@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block title %}User {{ user.username }}{% endblock %}
+
+{% block content %}
+<h2>User {{ user.username }}</h2>
+
+{% if stats %}
+  <p>Total notes: <strong>{{ stats.total }}</strong></p>
+
+  <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin:0.5rem 0 1rem;">
+    <div>
+      <strong>Status</strong><br>
+      {% for r in stats.by_status %}
+        <div>{{ r.value }}: {{ r.count }}</div>
+      {% endfor %}
+    </div>
+    <div>
+      <strong>Priority</strong><br>
+      {% for r in stats.by_priority %}
+        <div>{{ r.value }}: {{ r.count }}</div>
+      {% endfor %}
+    </div>
+    <div>
+      <strong>Context</strong><br>
+      {% for r in stats.by_context %}
+        <div>{{ r.value }}: {{ r.count }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <h3>Your Notes</h3>
+  {% if notes %}
+    <div style="max-height: 20rem; overflow-y: auto;">
+      {% for note in notes %}
+        <div style="padding: 0.35rem 0; border-bottom: 1px solid #ddd;">
+          <a class="note-title" href="/note/{{ note.id }}">{{ note.title }}</a><br>
+          <small>
+            {{ note.updated_at[:16].replace('T',' ') }}
+            {% if note.status or note.priority or note.context %} - {% endif %}
+            {% if note.status %}{{ note.status }}{% endif %}
+            {% if note.priority %}{% if note.status %} - {% endif %}{{ note.priority }}{% endif %}
+            {% if note.context %}{% if note.status or note.priority %} - {% endif %}{{ note.context }}{% endif %}
+          </small>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>You haven't created any notes yet.</p>
+  {% endif %}
+
+  <p class="note-actions" style="margin-top: 1rem;">
+    <a href="/">Back to all notes</a>
+  </p>
+{% else %}
+  <p>This page is private to the owner.</p>
+  <p class="note-actions"><a href="/">Back to all notes</a></p>
+{% endif %}
+{% endblock %}

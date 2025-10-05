@@ -2,6 +2,8 @@
 The example app dealt with items, this app deals with notes.
 Everything had to be customized for notes.
 There's also created and updated times.
+Example app's classes was a bit complex and required additions to most functions,
+could've probably been simplified.
 """
 import db
 from datetime import datetime
@@ -37,15 +39,17 @@ def get_classes(note_id):
     return db.query(sql, [note_id])
 
 def get_user_notes(user_id):
-    sql = """SELECT notes.id, notes.title, notes.content, 
-                    notes.created_at, notes.updated_at
-             FROM notes
-             WHERE notes.user_id = ?
-             ORDER BY notes.updated_at DESC"""
+    sql = """SELECT n.id, n.title, n.content, n.created_at, n.updated_at,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Status'  LIMIT 1) AS status,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Priority' LIMIT 1) AS priority,
+                    (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Context'  LIMIT 1) AS context
+             FROM notes n
+             WHERE n.user_id = ?
+             ORDER BY n.updated_at DESC, n.id DESC"""
     return db.query(sql, [user_id])
 
 def get_note(note_id):
-    sql = """SELECT notes.id, notes.title, notes.content, 
+    sql = """SELECT notes.id, notes.title, notes.content,
                     notes.created_at, notes.updated_at,
                     notes.user_id, users.username
              FROM notes, users
