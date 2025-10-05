@@ -17,6 +17,21 @@
     </p>
 
     <input type="hidden" name="note_id" value="{{ note.id }}" />
+    <p>
+    {% for class in all_classes %}
+        <label for="class{{ class }}">{{ class }}:</label>
+        <select name="classes" id="class{{ class}}" style="margin-right: 1em;">
+            <option value="">(select)</option>
+        {% for option in all_classes[class] %}
+            {% if classes[class] == option %}
+            <option value="{{ class }}:{{ option }}" selected>{{ option }}</option>
+            {% else %}
+            <option value="{{ class }}:{{ option }}">{{ option }}</option>
+            {% endif %}
+        {% endfor %}
+        </select>
+    {% endfor %}
+    </p>
     <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
     <input type="submit" value="Update Note" />
     <input type="submit" name="cancel" value="Cancel" onclick="window.location.href='/note/{{ note.id }}'; return false;" />

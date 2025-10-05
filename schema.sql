@@ -12,3 +12,17 @@ CREATE TABLE notes (
     created_at TEXT,
     updated_at TEXT
 );
+
+CREATE TABLE classes (
+    id INTEGER PRIMARY KEY,
+    title TEXT,
+    value TEXT
+);
+
+CREATE TABLE note_classes (
+    id INTEGER PRIMARY KEY,
+    note_id INTEGER REFERENCES notes,
+    title TEXT,
+    value TEXT
+);
+

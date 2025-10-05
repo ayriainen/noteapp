@@ -16,6 +16,18 @@
         <textarea name="content" id="content" rows="15" maxlength="5000" style="width: 100%;" required></textarea>
     </p>
 
+    <p>
+    {% for class in classes %}
+        <label for="class{{ class }}">{{ class }}:</label>
+        <select name="classes" id="class{{ class }}" style="margin-right: 1em;">
+            <option value="">(select)</option>
+        {% for option in classes[class] %}
+            <option value="{{ class }}:{{ option }}">{{ option }}</option>
+        {% endfor %}
+        </select>
+    {% endfor %}
+    </p>
+
     <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
     <input type="submit" value="Create Note" />
 </form>

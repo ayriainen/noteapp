@@ -14,6 +14,14 @@
     {{ note.content | show_lines }}
 </div>
 
+{% if classes %}
+<p>
+{% for class in classes %}
+    {{ class.title }}: {{ class.value }}{% if not loop.last %} &nbsp;&nbsp;&nbsp; {% endif %}
+{% endfor %}
+</p>
+{% endif %}
+
 <div class="note-meta">
     Created: {{ note.created_at[:16].replace('T', ' ') }}<br>
     Last updated: {{ note.updated_at[:16].replace('T', ' ') }}

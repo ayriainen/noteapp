@@ -48,7 +48,8 @@ def show_note(note_id):
         abort(404)
     if note["user_id"] != session["user_id"]:
         abort(403)
-    return render_template("show_note.html", note=note)
+    classes = notes.get_classes(note_id)
+    return render_template("show_note.html", note=note, classes=classes)
 
 @app.route("/search")
 def search():
@@ -64,7 +65,8 @@ def search():
 @app.route("/new_note")
 def new_note():
     require_login()
-    return render_template("new_note.html")
+    classes = notes.get_all_classes()
+    return render_template("new_note.html", classes=classes)
 
 @app.route("/create_note", methods=["POST"])
 def create_note():
@@ -79,9 +81,20 @@ def create_note():
         abort(403)
 
     user_id = session["user_id"]
-    notes.add_note(title, content, user_id)
 
-    note_id = db.last_insert_id()
+    all_classes = notes.get_all_classes()
+
+    classes = []
+    for entry in request.form.getlist("classes"):
+        if entry:
+            class_title, class_value = entry.split(":")
+            if class_title not in all_classes:
+                abort(403)
+            if class_value not in all_classes[class_title]:
+                abort(403)
+            classes.append((class_title, class_value))
+
+    note_id = notes.add_note(title, content, user_id, classes)
     return redirect("/note/" + str(note_id))
 
 @app.route("/edit_note/<int:note_id>")
@@ -92,7 +105,15 @@ def edit_note(note_id):
         abort(404)
     if note["user_id"] != session["user_id"]:
         abort(403)
-    return render_template("edit_note.html", note=note)
+
+    all_classes = notes.get_all_classes()
+    classes = {}
+    for my_class in all_classes:
+        classes[my_class] = ""
+    for entry in notes.get_classes(note_id):
+        classes[entry["title"]] = entry["value"]
+
+    return render_template("edit_note.html", note=note, classes=classes, all_classes=all_classes)
 
 @app.route("/update_note", methods=["POST"])
 def update_note():
@@ -113,7 +134,20 @@ def update_note():
     if not content or len(content) > 5000:
         abort(403)
 
-    notes.update_note(note_id, title, content)
+    all_classes = notes.get_all_classes()
+
+    classes = []
+    for entry in request.form.getlist("classes"):
+        if entry:
+            class_title, class_value = entry.split(":")
+            if class_title not in all_classes:
+                abort(403)
+            if class_value not in all_classes[class_title]:
+                abort(403)
+            classes.append((class_title, class_value))
+
+    notes.update_note(note_id, title, content, classes)
+
     return redirect("/note/" + str(note_id))
 
 @app.route("/remove_note/<int:note_id>", methods=["GET", "POST"])

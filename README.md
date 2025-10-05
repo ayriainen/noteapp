@@ -1,6 +1,6 @@
 # Note App
 
-This app is a project for the University of Helsinki course TKT20019 Databases and Web Programming. It closely follows the guidelines set in the course and mimicks the structure and style of the course's example app. It's a simple Python, Flask and SQLite web app for creating notes and sharing them with others.
+This app is a project for the University of Helsinki course TKT20019 Databases and Web Programming. It closely follows the guidelines set in the course and mimics the structure and style of the course's [example app](https://github.com/pllk/huutokauppa/). It's a simple Python, Flask and SQLite web app for creating notes and sharing them with others.
 
 ## Functions
 
@@ -27,6 +27,7 @@ Create the database tables:
 
 ```
 sqlite3 database.db < schema.sql
+sqlite3 database.db < init.sql
 ```
 
 You can start the app with:
@@ -37,4 +38,4 @@ python3 app.py
 
 Then go to http://localhost:5000 in your browser to operate the app. Macs sometimes hog port 5000 for Airdrop in which case turn off Airdrop Receiver in settings.
 
-When you want to stop just press **CTRL + C**, and you can restart it with the same **python3 app.py** command. If you want deactivate venv just run the **deactivate** command. You can clear the database by deleting database.db and rerunning its creation.
+When you want to stop just press **CTRL + C**, and you can restart it with the same **python3 app.py** command. If you want to deactivate venv just run the **deactivate** command. You can clear the database by deleting database.db and rerunning its creation.
