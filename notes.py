@@ -75,6 +75,10 @@ def update_note(note_id, title, content, classes):
 def remove_note(note_id):
     sql = "DELETE FROM note_classes WHERE note_id = ?"
     db.execute(sql, [note_id])
+    sql = "DELETE FROM comments WHERE note_id = ?"
+    db.execute(sql, [note_id])
+    sql = "DELETE FROM shares WHERE note_id = ?"
+    db.execute(sql, [note_id])
     sql = "DELETE FROM notes WHERE id = ?"
     db.execute(sql, [note_id])
 
