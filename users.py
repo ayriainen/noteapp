@@ -6,16 +6,39 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import db
 
 def get_user(user_id):
+    """Get user by id."""
     sql = "SELECT id, username FROM users WHERE id = ?"
     result = db.query(sql, [user_id])
     return result[0] if result else None
 
 def get_user_by_username(username):
+    """Get user by username."""
     sql = "SELECT id, username FROM users WHERE username = ?"
     result = db.query(sql, [username])
     return result[0] if result else None
 
+def create_user(username, password):
+    """Create user with username and hashed password."""
+    password_hash = generate_password_hash(password)
+    sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)"
+    db.execute(sql, [username, password_hash])
+
+def check_login(username, password):
+    """Checking username and password correctness."""
+    sql = "SELECT id, password_hash FROM users WHERE username = ?"
+    result = db.query(sql, [username])
+    if not result:
+        return None
+
+    user_id = result[0]["id"]
+    password_hash = result[0]["password_hash"]
+    if check_password_hash(password_hash, password):
+        return user_id
+    else:
+        return None
+
 def get_notes(user_id):
+    """Get all of a user's notes."""
     sql = """SELECT n.id, n.title, n.updated_at,
                     (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Status'  LIMIT 1) AS status,
                     (SELECT value FROM note_classes WHERE note_id = n.id AND title = 'Priority' LIMIT 1) AS priority,
@@ -27,6 +50,7 @@ def get_notes(user_id):
     return db.query(sql, [user_id])
 
 def get_note_stats(user_id):
+    """Get stats about a user's notes for the userpage stats display."""
     sql = "SELECT COUNT(*) AS total FROM notes WHERE user_id = ?"
     total = db.query(sql, [user_id])[0]["total"]
 
@@ -75,21 +99,3 @@ def get_note_stats(user_id):
         "by_priority": by_priority,
         "by_context": by_context,
     }
-
-def create_user(username, password):
-    password_hash = generate_password_hash(password)
-    sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)"
-    db.execute(sql, [username, password_hash])
-
-def check_login(username, password):
-    sql = "SELECT id, password_hash FROM users WHERE username = ?"
-    result = db.query(sql, [username])
-    if not result:
-        return None
-
-    user_id = result[0]["id"]
-    password_hash = result[0]["password_hash"]
-    if check_password_hash(password_hash, password):
-        return user_id
-    else:
-        return None

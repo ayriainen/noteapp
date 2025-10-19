@@ -5,6 +5,7 @@
 {% block content %}
 <h2>{{ note.title }}</h2>
 
+{# Note owner only edit and delete buttons #}
 {% if session.user_id == note.user_id %}
 <p class="note-actions">
   <a href="/edit_note/{{ note.id }}">Edit</a>
@@ -32,6 +33,7 @@
     {% endif %}
 </div>
 
+{# Note owner only sharing menu #}
 {% if session.user_id == note.user_id %}
   {% if shared_users %}
     Sharing with:

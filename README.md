@@ -6,7 +6,6 @@ This app is a project for the University of Helsinki course TKT20019 Databases a
 
 * User can create an account and log in to the application.
 * User can add, edit and delete notes.
-* User can add images to notes. (not yet finished)
 * User can see notes they have created and notes shared with them.
 * User can search notes by keyword.
 * App has a user page that displays statistics and notes created by the user.
@@ -15,7 +14,7 @@ This app is a project for the University of Helsinki course TKT20019 Databases a
 
 ## Operation/installation
 
-We'll go through the venv operation of the app. After cloning the repository locally, set up venv and install the few dependencies in the app folder in terminal (Linux/Mac):
+We'll go through the venv operation of the app. After cloning the repository locally, set up venv and install the dependencies (only Flask for now) in the app folder in terminal (Linux/Mac):
 
 ```
 python3 -m venv venv

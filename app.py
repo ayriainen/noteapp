@@ -2,7 +2,6 @@
 This is the main file, mostly resembling the example app's app.py.
 Note sharing added bothersome complexity.
 """
-import re
 import secrets
 import sqlite3
 
@@ -11,7 +10,6 @@ from flask import abort, flash, redirect, render_template, request, session
 import markupsafe
 
 import config
-import db
 import notes
 import users
 
@@ -19,10 +17,12 @@ app = Flask(__name__)
 app.secret_key = config.secret_key
 
 def require_login():
+    """Login check used by routes below."""
     if "user_id" not in session:
         abort(403)
 
 def check_csrf():
+    """CSRV check used by routes below."""
     if "csrf_token" not in request.form:
         abort(403)
     if request.form["csrf_token"] != session["csrf_token"]:
@@ -30,12 +30,14 @@ def check_csrf():
 
 @app.template_filter()
 def show_lines(content):
+    """Newlines to br."""
     content = str(markupsafe.escape(content))
     content = content.replace("\n", "<br />")
     return markupsafe.Markup(content)
 
 @app.route("/")
 def index():
+    """Homepage index.html."""
     if "user_id" in session:
         me = session["user_id"]
         your_notes = notes.get_user_notes(me)
@@ -43,30 +45,75 @@ def index():
         return render_template("index.html", notes=your_notes, shared_notes=shared_notes)
     return render_template("index.html", notes=[], shared_notes=[])
 
-@app.route("/note/<int:note_id>")
-def show_note(note_id):
-    require_login()
-    note = notes.get_note(note_id)
-    if not note:
-        abort(404)
-    me = session["user_id"]
-    if note["user_id"] != me and not notes.is_shared_with(note_id, me):
-        abort(403)
-    classes = notes.get_classes(note_id)
-    shared_users = notes.get_shares(note_id) if note["user_id"] == me else []
-    comments = notes.get_comments(note_id)
-    return render_template("show_note.html",
-                           note=note,
-                           classes=classes,
-                           shared_users=shared_users,
-                           comments=comments)
+@app.route("/register")
+def register():
+    """Registration with register.html."""
+    return render_template("register.html")
+
+@app.route("/create_user", methods=["POST"])
+def create_user():
+    """User registration processing from register.html."""
+    username = request.form["username"]
+    password1 = request.form["password1"]
+    password2 = request.form["password2"]
+
+    if password1 != password2:
+        flash("ERROR: Passwords do not match")
+        return redirect("/register")
+
+    if len(username) < 3 or len(username) > 20:
+        flash("ERROR: Username must be between 3 and 20 characters")
+        return redirect("/register")
+
+    if len(password1) < 3:
+        flash("ERROR: Password must be at least 3 characters")
+        return redirect("/register")
+
+    try:
+        users.create_user(username, password1)
+    except sqlite3.IntegrityError:
+        flash("ERROR: Username is already taken")
+        return redirect("/register")
+
+    flash("Account created successfully! Please log in.")
+    return redirect("/login")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """User login with login.html."""
+    if request.method == "GET":
+        return render_template("login.html")
+
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        user_id = users.check_login(username, password)
+        if user_id:
+            session["user_id"] = user_id
+            session["username"] = username
+            session["csrf_token"] = secrets.token_hex(16)
+            return redirect("/")
+        else:
+            flash("ERROR: Invalid username or password")
+            return redirect("/login")
+
+@app.route("/logout")
+def logout():
+    """Logging out, throws you back to login.html, ready to change users etc."""
+    if "user_id" in session:
+        del session["user_id"]
+        del session["username"]
+        del session["csrf_token"]
+    return redirect("/login")
 
 @app.route("/search")
 def search():
+    """Search notes, own or shared with, with a query."""
     require_login()
     query = request.args.get("query")
     if query:
-        results = notes.search_accessible(session["user_id"], query)
+        results = notes.search_notes(session["user_id"], query)
     else:
         query = ""
         results = []
@@ -74,12 +121,14 @@ def search():
 
 @app.route("/new_note")
 def new_note():
+    """Creating a new note with new_note.html."""
     require_login()
     classes = notes.get_all_classes()
     return render_template("new_note.html", classes=classes)
 
 @app.route("/create_note", methods=["POST"])
 def create_note():
+    """Processing creation of new note, with handling of title, content and classes."""
     require_login()
     check_csrf()
 
@@ -107,8 +156,28 @@ def create_note():
     note_id = notes.add_note(title, content, user_id, classes)
     return redirect("/note/" + str(note_id))
 
+@app.route("/note/<int:note_id>")
+def show_note(note_id):
+    """Unique page for each note based on its id. Also shows users shared with and comments."""
+    require_login()
+    note = notes.get_note(note_id)
+    if not note:
+        abort(404)
+    me = session["user_id"]
+    if note["user_id"] != me and not notes.is_shared_with(note_id, me):
+        abort(403)
+    classes = notes.get_classes(note_id)
+    shared_users = notes.get_shares(note_id) if note["user_id"] == me else []
+    comments = notes.get_comments(note_id)
+    return render_template("show_note.html",
+                           note=note,
+                           classes=classes,
+                           shared_users=shared_users,
+                           comments=comments)
+
 @app.route("/edit_note/<int:note_id>")
 def edit_note(note_id):
+    """Editing note on edit_note.html."""
     require_login()
     note = notes.get_note(note_id)
     if not note:
@@ -127,6 +196,7 @@ def edit_note(note_id):
 
 @app.route("/update_note", methods=["POST"])
 def update_note():
+    """Processing of a note edit."""
     require_login()
     check_csrf()
 
@@ -162,6 +232,7 @@ def update_note():
 
 @app.route("/remove_note/<int:note_id>", methods=["GET", "POST"])
 def remove_note(note_id):
+    """Note removal with remove_note.html."""
     require_login()
 
     note = notes.get_note(note_id)
@@ -183,6 +254,7 @@ def remove_note(note_id):
 
 @app.route("/share_note", methods=["POST"])
 def share_note():
+    """Processing note sharing with other users."""
     require_login()
     check_csrf()
 
@@ -211,6 +283,7 @@ def share_note():
 
 @app.route("/unshare_note", methods=["POST"])
 def unshare_note():
+    """Removal of a share with another user."""
     require_login()
     check_csrf()
 
@@ -225,66 +298,9 @@ def unshare_note():
     flash("Sharing removed")
     return redirect("/note/" + str(note_id))
 
-@app.route("/register")
-def register():
-    return render_template("register.html")
-
-@app.route("/create_user", methods=["POST"])
-def create_user():
-    username = request.form["username"]
-    password1 = request.form["password1"]
-    password2 = request.form["password2"]
-
-    if password1 != password2:
-        flash("ERROR: Passwords do not match")
-        return redirect("/register")
-
-    if len(username) < 3 or len(username) > 20:
-        flash("ERROR: Username must be between 3 and 20 characters")
-        return redirect("/register")
-
-    if len(password1) < 3:
-        flash("ERROR: Password must be at least 3 characters")
-        return redirect("/register")
-
-    try:
-        users.create_user(username, password1)
-    except sqlite3.IntegrityError:
-        flash("ERROR: Username is already taken")
-        return redirect("/register")
-
-    flash("Account created successfully! Please log in.")
-    return redirect("/login")
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "GET":
-        return render_template("login.html")
-
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        user_id = users.check_login(username, password)
-        if user_id:
-            session["user_id"] = user_id
-            session["username"] = username
-            session["csrf_token"] = secrets.token_hex(16)
-            return redirect("/")
-        else:
-            flash("ERROR: Invalid username or password")
-            return redirect("/login")
-
-@app.route("/logout")
-def logout():
-    if "user_id" in session:
-        del session["user_id"]
-        del session["username"]
-        del session["csrf_token"]
-    return redirect("/login")
-
 @app.route("/add_comment", methods=["POST"])
 def add_comment():
+    """Comment processing. Notes can have comments from users they have been shared with."""
     require_login()
     check_csrf()
     note_id = int(request.form["note_id"])
@@ -303,6 +319,7 @@ def add_comment():
 
 @app.route("/edit_comment/<int:comment_id>", methods=["GET", "POST"])
 def edit_comment(comment_id):
+    """Editing a comment with edit_comment.html."""
     require_login()
     comment = notes.get_comment(comment_id)
     if not comment:
@@ -325,6 +342,7 @@ def edit_comment(comment_id):
 
 @app.route("/remove_comment/<int:comment_id>", methods=["POST"])
 def remove_comment(comment_id):
+    """Processing the removal of a comment."""
     require_login()
     check_csrf()
     comment = notes.get_comment(comment_id)
@@ -341,6 +359,7 @@ def remove_comment(comment_id):
 
 @app.route("/user/<int:user_id>")
 def show_user(user_id):
+    """Show user page with stats via show_user.html."""
     user = users.get_user(user_id)
     if not user:
         abort(404)
